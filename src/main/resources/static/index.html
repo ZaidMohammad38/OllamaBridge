@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OllamaBridge Chat</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3>Chats</h3>
+
+            <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+            <button class="clear-btn" onclick="clearAllChats()">🗑 Clear All</button>
+            <button class="clear-sidebar-btn" onclick="clearSidebar()">🧹 Clear Sidebar</button>
+
+            <div class="chat-history" id="chatHistory"></div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="main-chat">
+            <h2>OllamaBridge AI</h2>
+
+            <div id="chatBox"></div>
+
+            <div class="input-area">
+                <input type="text" id="prompt" placeholder="Message AI..." />
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+
+</html>
