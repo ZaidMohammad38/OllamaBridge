@@ -23,11 +23,12 @@ public class ChatMessage {
 
     private String sender; // USER or AI
 
-    private Long chatId;
+    // private Long chatId;
 
     @ManyToOne
-    @JoinColumn(name = "chat_session_id")
+    @JoinColumn(name = "chat_session_id", nullable = false)
     private ChatSession chatSession;
-
+    
+    
 
 }

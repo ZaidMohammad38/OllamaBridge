@@ -1,227 +1,231 @@
-// =========================
-// GLOBAL VARIABLES
-// =========================
-let currentChatId = null;
+// ===========================
+// OllamaBridge — app.js
+// ===========================
 
-// Load chat history when page opens
+let currentChatId = null;
+const USER_ID = 'zaid';
+
+// ===========================
+// INIT
+// ===========================
 window.onload = function () {
-    newChat();
+    spawnParticles();
+    loadSessions();
+    // We don't call newChat() here anymore to avoid "Ghost Sessions"
 };
 
-// =========================
-// NON-STREAMING VERSION
-// Recommended for normal use
-// Saves instantly to DB
-// =========================
-function sendMessage() {
-    const promptInput = document.getElementById("prompt");
-    const prompt = promptInput.value.trim();
-    const chatBox = document.getElementById("chatBox");
+// ===========================
+// CORE CHAT LOGIC
+// ===========================
+
+async function sendMessage() {
+    const ta = document.getElementById('prompt');
+    const prompt = ta.value.trim();
+    const chatBox = document.getElementById('chatBox');
 
     if (!prompt) return;
 
-    // Add sidebar title only for first message
-    if (chatBox.innerHTML.trim() === "") {
-        addChatToSidebar(prompt);
+    // 1. If no session exists, create one first
+    if (!currentChatId) {
+        try {
+            // Use the first 20 chars of the prompt as the title
+            const title = prompt.length > 20 ? prompt.substring(0, 20) + "..." : prompt;
+            const response = await fetch(`/chat/session?userId=${USER_ID}&title=${encodeURIComponent(title)}`, {
+                method: "POST"
+            });
+            const session = await response.json();
+            currentChatId = session.id;
+        } catch (err) {
+            console.error("Failed to create session:", err);
+            return;
+        }
     }
 
-    // Show temporary UI
+    // 2. UI Updates
+    const welcome = document.getElementById('welcomeScreen');
+    if (welcome) welcome.remove();
+
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    // Add User Message & Thinking Indicator
     chatBox.innerHTML += `
         <div class="message user">
-            <div class="bubble">${prompt}</div>
+            <div class="msg-header">
+                <div class="avatar user-av">U</div>
+                <span>${ts}</span>
+            </div>
+            <div class="bubble">${escapeHtml(prompt)}</div>
         </div>
-
-        <div class="message ai">
-            <div class="bubble thinking">Thinking...</div>
+        <div class="message ai" id="thinking-bubble">
+            <div class="msg-header">
+                <div class="avatar ai-av">AI</div>
+                <span>thinking…</span>
+            </div>
+            <div class="bubble">
+                <div class="thinking-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
         </div>
     `;
 
     chatBox.scrollTop = chatBox.scrollHeight;
+    ta.value = '';
+    autoResize(ta);
 
-    // Send to backend
-    fetch("/chat?userId=zaid&chatId=" + currentChatId, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            prompt: prompt
-        })
+    // 3. Send Message to Backend
+    fetch(`/chat?userId=${USER_ID}&chatId=${currentChatId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
     })
-        .then(response => response.json())
-        .then(data => {
-            loadHistory();
-        })
-        .catch(error => {
-            chatBox.innerHTML += `
-            <div class="message ai">
-                <div class="bubble">
-                    Error: ${error}
-                </div>
-            </div>
-        `;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
-
-    promptInput.value = "";
+    .then(r => r.json())
+    .then(() => {
+        loadHistory(); 
+        loadSessions(); // Refresh sidebar to show the new/updated session
+    })
+    .catch(err => {
+        const tb = document.getElementById('thinking-bubble');
+        if (tb) {
+            tb.querySelector('.bubble').innerHTML = `<span style="color:#f472b6">Error: ${err}</span>`;
+        }
+    });
 }
 
-/*
-=========================
-STREAMING VERSION
-Uncomment this if you want live typing effect
-DB updates only after stream ends
-=========================
+// ===========================
+// SESSION MANAGEMENT
+// ===========================
 
-function sendMessageStreaming() {
-    const promptInput = document.getElementById("prompt");
-    const prompt = promptInput.value.trim();
+function newChat() {
+    currentChatId = null; // Reset the ID locally
     const chatBox = document.getElementById("chatBox");
-
-    if (!prompt) return;
-
-    if (chatBox.innerHTML.trim() === "") {
-        addChatToSidebar(prompt);
-    }
-
-    chatBox.innerHTML += `
-        <div class="message user">
-            <div class="bubble">${prompt}</div>
-        </div>
-
-        <div class="message ai">
-            <div class="bubble" id="streamingResponse"></div>
+    
+    // Reset UI to Welcome Screen
+    chatBox.innerHTML = `
+        <div class="welcome" id="welcomeScreen">
+            <div class="welcome-orb zm-orb">ZM</div>
+            <h1>OllamaBridge AI</h1>
+            <p>Your anime-inspired AI companion. Ask me anything.</p>
+            <div class="suggestion-grid">
+                <div class="suggestion" onclick="fillPrompt('Explain quantum computing simply')">🔮 Explain quantum</div>
+                <div class="suggestion" onclick="fillPrompt('Write a short haiku about code')">🌸 Write a haiku</div>
+                <div class="suggestion" onclick="fillPrompt('Help me debug my JavaScript')">⚡ Help me debug</div>
+            </div>
         </div>
     `;
-
-    const aiBubble = document.getElementById("streamingResponse");
-
-    const eventSource = new EventSource(
-        "/stream/chat?prompt=" + encodeURIComponent(prompt)
-    );
-
-    eventSource.onmessage = function (event) {
-        aiBubble.textContent += event.data + " ";
-        chatBox.scrollTop = chatBox.scrollHeight;
-    };
-
-    eventSource.onerror = function () {
-        eventSource.close();
-        loadHistory();
-    };
-
-    promptInput.value = "";
+    
+    // Highlights the reset in the sidebar
+    document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
 }
-*/
 
-// =========================
-// LOAD CHAT HISTORY
-// =========================
+function loadSessions() {
+    fetch(`/chat/sessions?userId=${USER_ID}`)
+        .then(response => response.json())
+        .then(data => {
+            const history = document.getElementById("chatHistory");
+            history.innerHTML = "";
+
+            data.forEach(session => {
+                const div = document.createElement("div");
+                div.className = "chat-item";
+                if (session.id === currentChatId) div.classList.add('active');
+                div.dataset.chatId = session.id;
+                div.textContent = session.title;
+                div.onclick = () => openChat(session.id);
+                history.appendChild(div);
+            });
+        });
+}
+
+function openChat(chatId) {
+    currentChatId = chatId;
+    const welcome = document.getElementById('welcomeScreen');
+    if (welcome) welcome.remove();
+    
+    document.querySelectorAll('.chat-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.chatId == chatId);
+    });
+    loadHistory();
+}
+
 function loadHistory() {
     if (!currentChatId) return;
 
-    fetch("/chat/history?userId=zaid&chatId=" + currentChatId)
+    fetch(`/chat/history?userId=${USER_ID}&chatId=${currentChatId}`)
         .then(response => response.json())
         .then(data => {
             const chatBox = document.getElementById("chatBox");
             chatBox.innerHTML = "";
 
             data.forEach(msg => {
-                const senderClass =
-                    msg.sender === "USER" ? "user" : "ai";
+                const senderClass = msg.sender === "USER" ? "user" : "ai";
+                const content = msg.sender === "AI" ? marked.parse(msg.message) : escapeHtml(msg.message);
 
                 chatBox.innerHTML += `
                     <div class="message ${senderClass}">
-                        <div class="bubble">
-                            ${msg.message}
-                        </div>
+                        <div class="bubble">${content}</div>
                     </div>
                 `;
             });
-
             chatBox.scrollTop = chatBox.scrollHeight;
         });
 }
 
-// =========================
-// NEW CHAT
-// =========================
-function newChat() {
-    currentChatId = Date.now(); // temporary unique id
-    document.getElementById("chatBox").innerHTML = "";
-}
-
-// =========================
-// CLEAR ALL CHATS FROM DB
-// =========================
 function clearAllChats() {
-    fetch("/chat/clear?userId=zaid", {
-        method: "DELETE"
-    })
-        .then(() => {
-            // Reset current session
-            currentChatId = null;
-
-            // Clear chat UI
-            document.getElementById("chatBox").innerHTML = "";
-
-            // Clear sidebar titles
-            clearSidebar();
-
-            // Start a fresh new chat session
-            newChat();
-        });
-}
-
-
-// =========================
-// SIDEBAR TITLE ADD
-// =========================
-function addChatToSidebar(title) {
-    const history = document.getElementById("chatHistory");
-
-    // Clean title
-    let formattedTitle = title.trim();
-
-    // Capitalize first letter
-    formattedTitle =
-        formattedTitle.charAt(0).toUpperCase() +
-        formattedTitle.slice(1);
-
-    // Limit length
-    if (formattedTitle.length > 30) {
-        formattedTitle =
-            formattedTitle.substring(0, 30) + "...";
-    }
-
-    history.innerHTML += `
-        <div class="chat-item"
-             onclick="openChat(${currentChatId})">
-            ${formattedTitle}
-        </div>
-    `;
-}
-
-//openChat
-function openChat(chatId) {
-    currentChatId = chatId;
-    loadHistory();
-}
-
-// =========================
-// CLEAR SIDEBAR ONLY
-// =========================
-function clearSidebar() {
-    const history = document.getElementById("chatHistory");
-    history.innerHTML = "";
-}
-
-// =========================
-// ENTER KEY SEND
-// =========================
-document.getElementById("prompt")
-    .addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-            sendMessage();
-        }
+    if (!confirm("Are you sure you want to delete all chat history?")) return;
+    
+    fetch(`/chat/clear?userId=${USER_ID}`, { method: 'DELETE' })
+    .then(() => {
+        newChat();
+        loadSessions();
     });
+}
+
+// ===========================
+// UTILS & HELPERS
+// ===========================
+
+function spawnParticles() {
+    const container = document.getElementById('bgParticles');
+    if (!container) return;
+    const colors = ['#7c5cbf', '#c084fc', '#f472b6', '#818cf8', '#34d399'];
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 4 + 2;
+        p.style.cssText = `
+            width: ${size}px; height: ${size}px;
+            left: ${Math.random() * 100}%;
+            background: ${colors[Math.floor(Math.random() * colors.length)]};
+            animation-duration: ${Math.random() * 18 + 14}s;
+        `;
+        container.appendChild(p);
+    }
+}
+
+function fillPrompt(text) {
+    const ta = document.getElementById('prompt');
+    ta.value = text;
+    ta.focus();
+    autoResize(ta);
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Keyboard Listeners
+const promptInput = document.getElementById('prompt');
+promptInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});

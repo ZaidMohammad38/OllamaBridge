@@ -5,39 +5,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OllamaBridge Chat</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Noto+Sans+JP:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-    <div class="app-layout">
+    <div class="app">
+        <div class="bg-particles" id="bgParticles"></div>
 
         <!-- Sidebar -->
         <div class="sidebar">
-            <h3>Chats</h3>
+            <div class="logo">
+                <div class="logo-icon zm-logo">ZM</div>
+                <div>
+                    <div class="logo-text">OllamaBridge</div>
+                    <div class="logo-sub">AI Interface</div>
+                </div>
+            </div>
 
-            <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
-            <button class="clear-btn" onclick="clearAllChats()">🗑 Clear All</button>
-            <button class="clear-sidebar-btn" onclick="clearSidebar()">🧹 Clear Sidebar</button>
+            <button class="sidebar-btn btn-new" onclick="newChat()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Conversation
+            </button>
+            <button class="sidebar-btn btn-clear" onclick="clearAllChats()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                </svg>
+                Clear All Chats
+            </button>
+            <button class="sidebar-btn btn-sidebar" onclick="clearSidebar()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                Clear Sidebar
+            </button>
 
+            <div class="divider"></div>
+            <div class="section-label">Recent Chats</div>
             <div class="chat-history" id="chatHistory"></div>
         </div>
 
         <!-- Main Chat -->
-        <div class="main-chat">
-            <h2>OllamaBridge AI</h2>
+        <div class="main">
+            <div class="topbar">
+                <div class="topbar-title">
+                    <div class="status-dot"></div>
+                    <span>Chat Session</span>
+                </div>
+                <div class="model-badge">✦ Online</div>
+            </div>
 
-            <div id="chatBox"></div>
+            <div id="chatBox">
+                <div class="welcome" id="welcomeScreen">
+                    <div class="welcome-orb zm-orb">ZM</div>
+                    <h1>OllamaBridge AI</h1>
+                    <p>Your anime-inspired AI companion. Ask me anything — I'm always ready to assist.</p>
+                    <div class="suggestion-grid">
+                        <div class="suggestion" onclick="fillPrompt('Explain quantum computing simply')">🔮 Explain
+                            quantum computing simply</div>
+                        <div class="suggestion" onclick="fillPrompt('Write a short haiku about code')">🌸 Write a haiku
+                            about code</div>
+                        <div class="suggestion" onclick="fillPrompt('Help me debug my JavaScript')">⚡ Help me debug
+                            JavaScript</div>
+                        <div class="suggestion" onclick="fillPrompt('Summarize the history of anime')">🎌 History of
+                            anime</div>
+                    </div>
+                </div>
+            </div>
 
-            <div class="input-area">
-                <input type="text" id="prompt" placeholder="Message AI..." />
-                <button onclick="sendMessage()">Send</button>
+            <div class="input-wrap">
+                <div class="input-inner">
+                    <textarea id="prompt" placeholder="Message OllamaBridge AI..." rows="1"></textarea>
+                    <button class="send-btn" onclick="sendMessage()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span>Press</span><span class="kbd">Enter</span><span>to send</span>
+                    <span style="margin:0 4px">·</span>
+                    <span class="kbd">Shift+Enter</span><span>for new line</span>
+                </div>
             </div>
         </div>
-
     </div>
 
-    <script src="/js/app.js"></script>
+    <script src="js/app.js"></script>
 </body>
 
 </html>
