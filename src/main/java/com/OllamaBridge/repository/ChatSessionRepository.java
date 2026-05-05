@@ -11,9 +11,10 @@ import com.OllamaBridge.entity.ChatSession;
 import jakarta.transaction.Transactional;
 
 @Repository
-public interface ChatSessionRepository extends JpaRepository<ChatSession, Long>{
-    List<ChatSession> findByUserIdOrderByCreatedAtDesc(String userId);
-    
+public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> {
+
+    List<ChatSession> findByUserIdOrderByUpdatedAtDesc(String userId);
+
     @Transactional
     @Modifying
     void deleteByUserId(String userId);

@@ -2,111 +2,197 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OllamaBridge Chat</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Noto+Sans+JP:wght@400;500&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OllamaBridge — Local AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
 
-    <div class="app">
-        <div class="bg-particles" id="bgParticles"></div>
-
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <div class="logo-icon zm-logo">ZM</div>
-                <div>
-                    <div class="logo-text">OllamaBridge</div>
-                    <div class="logo-sub">AI Interface</div>
-                </div>
-            </div>
-
-            <button class="sidebar-btn btn-new" onclick="newChat()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                New Conversation
-            </button>
-            <button class="sidebar-btn btn-clear" onclick="clearAllChats()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14H6L5 6" />
-                    <path d="M10 11v6M14 11v6" />
-                </svg>
-                Clear All Chats
-            </button>
-            <button class="sidebar-btn btn-sidebar" onclick="clearSidebar()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                </svg>
-                Clear Sidebar
-            </button>
-
-            <div class="divider"></div>
-            <div class="section-label">Recent Chats</div>
-            <div class="chat-history" id="chatHistory"></div>
-        </div>
-
-        <!-- Main Chat -->
-        <div class="main">
-            <div class="topbar">
-                <div class="topbar-title">
-                    <div class="status-dot"></div>
-                    <span>Chat Session</span>
-                </div>
-                <div class="model-badge">✦ Online</div>
-            </div>
-
-            <div id="chatBox">
-                <div class="welcome" id="welcomeScreen">
-                    <div class="welcome-orb zm-orb">ZM</div>
-                    <h1>OllamaBridge AI</h1>
-                    <p>Your anime-inspired AI companion. Ask me anything — I'm always ready to assist.</p>
-                    <div class="suggestion-grid">
-                        <div class="suggestion" onclick="fillPrompt('Explain quantum computing simply')">🔮 Explain
-                            quantum computing simply</div>
-                        <div class="suggestion" onclick="fillPrompt('Write a short haiku about code')">🌸 Write a haiku
-                            about code</div>
-                        <div class="suggestion" onclick="fillPrompt('Help me debug my JavaScript')">⚡ Help me debug
-                            JavaScript</div>
-                        <div class="suggestion" onclick="fillPrompt('Summarize the history of anime')">🎌 History of
-                            anime</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="input-wrap">
-                <div class="input-inner">
-                    <textarea id="prompt" placeholder="Message OllamaBridge AI..." rows="1"></textarea>
-                    <button class="send-btn" onclick="sendMessage()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13" />
-                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="input-footer">
-                    <span>Press</span><span class="kbd">Enter</span><span>to send</span>
-                    <span style="margin:0 4px">·</span>
-                    <span class="kbd">Shift+Enter</span><span>for new line</span>
-                </div>
-            </div>
-        </div>
+  <!-- Background -->
+<div class="bg-layer">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grid-lines"></div>
+</div>
+ 
+<!-- Toast container -->
+<div id="toasts"></div>
+ 
+<!-- Scroll button -->
+<button id="scrollBtn" title="Scroll to bottom">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+</button>
+ 
+<!-- ═══════ USERNAME MODAL ═══════ -->
+<div class="user-modal" id="userModal">
+  <div class="user-modal-box">
+    <div class="user-modal-orb">ZM</div>
+    <h2>Welcome to OllamaBridge</h2>
+    <p>Your local AI, fully offline. Enter a username to get started — this is stored only in your browser.</p>
+    <input type="text" id="usernameInput" placeholder="Your name…" maxlength="24" autocomplete="off" />
+    <button class="user-modal-btn" onclick="saveUsername()">Start Chatting →</button>
+  </div>
+</div>
+ 
+<!-- ═══════ SETTINGS PANEL ═══════ -->
+<div class="panel-overlay" id="settingsOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">⚙️ Session Settings</div>
+      <button class="panel-close" onclick="closeSettings()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
+    <div class="panel-body">
+      <div class="field">
+        <div class="field-label">Model <span class="badge">per session</span></div>
+        <select class="field-select" id="settingsModel">
+          <option value="">Loading models…</option>
+        </select>
+        <div class="field-hint">Choose which locally-installed Ollama model to use for this session.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">System Prompt <span class="badge">optional</span></div>
+        <textarea class="field-textarea" id="settingsSystemPrompt" placeholder="e.g. You are a senior Java engineer. Be concise and use code examples."></textarea>
+        <div class="field-hint">Defines the AI's persona and behavior. Injected at the start of every context window.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Session Title</div>
+        <input type="text" class="field-input" id="settingsTitle" placeholder="Chat title…" maxlength="60" />
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- ═══════ SHORTCUTS PANEL ═══════ -->
+<div class="panel-overlay" id="shortcutsOverlay">
+  <div class="panel shortcuts-panel">
+    <div class="panel-head">
+      <div class="panel-title">⌨️ Keyboard Shortcuts</div>
+      <button class="panel-close" onclick="document.getElementById('shortcutsOverlay').classList.remove('open')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div id="shortcutsList"></div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ═══════ APP ═══════ -->
+<div class="app">
+ 
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo-box">ZM</div>
+      <div class="logo-info">
+        <div class="logo-name">OllamaBridge</div>
+        <div class="logo-sub">LOCAL AI INTERFACE</div>
+      </div>
+    </div>
+ 
+    <button class="btn-new-chat" onclick="newChat()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Conversation
+    </button>
+ 
+    <div class="sb-label">Recent Chats</div>
+    <div class="chat-list" id="chatHistory">
+      <div class="no-sessions">No conversations yet</div>
+    </div>
+ 
+    <div class="sb-footer">
+      <div class="ollama-status">
+        <div class="status-dot checking" id="statusDot"></div>
+        <span id="statusLabel">Checking…</span>
+      </div>
+      <div style="display:flex;gap:5px">
+        <button class="sb-icon-btn" onclick="openShortcuts()" title="Keyboard shortcuts">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+        </button>
+        <button class="sb-icon-btn" title="Clear all history" onclick="confirmClearAll()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+ 
+  <!-- MAIN -->
+  <main class="main">
+ 
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title" id="topbarTitle">New Conversation</div>
+          <div class="context-bar">
+            <div class="context-track"><div class="context-fill" id="contextFill" style="width:0%"></div></div>
+            <span id="contextLabel">0 / 20 msgs in context</span>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="model-selector" id="modelSelector" onclick="toggleModelDropdown()" style="position:relative">
+          <div class="model-dot"></div>
+          <span id="modelLabel">—</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <div class="dropdown" id="modelDropdown" style="display:none"></div>
+        </div>
+        <button class="topbar-btn" onclick="openSettings()" title="Session settings (Ctrl+,)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Settings
+        </button>
+        <button class="topbar-btn" onclick="exportChat()" title="Export chat (Ctrl+E)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+      </div>
+    </div>
+ 
+    <!-- Chat messages -->
+    <div id="chatBox">
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-orb">ZM</div>
+        <h1>OllamaBridge AI</h1>
+        <p>Fully local, fully offline. Running on your machine. Ask anything.</p>
+        <div class="suggestions">
+          <div class="sug" onclick="fillPrompt('Explain quantum computing in simple terms')"><span class="sug-ico">🔮</span>Explain quantum computing</div>
+          <div class="sug" onclick="fillPrompt('Write a haiku about writing code at 2am')"><span class="sug-ico">🌸</span>Haiku about coding at 2am</div>
+          <div class="sug" onclick="fillPrompt('What are the SOLID principles in software engineering?')"><span class="sug-ico">📐</span>SOLID principles explained</div>
+          <div class="sug" onclick="fillPrompt('Write a Spring Boot REST API boilerplate in Java')"><span class="sug-ico">☕</span>Spring Boot REST boilerplate</div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- Input -->
+    <div class="input-zone">
+      <div class="input-wrap">
+        <textarea id="prompt" placeholder="Message OllamaBridge AI…" rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send (Enter)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hints">
+        <span>Press</span><span class="kbd">Enter</span><span>to send ·</span>
+        <span class="kbd">Shift+Enter</span><span>newline ·</span>
+        <span class="kbd">Ctrl+K</span><span>focus</span>
+      </div>
+    </div>
+  </main>
+</div>
 
-    <script src="js/app.js"></script>
+  <script src="js/app.js"></script>
 </body>
 
 </html>
